@@ -4,7 +4,8 @@ from math import radians, sin, cos, sqrt, atan2
 import matplotlib.pyplot as plt
 from mpl_toolkits.basemap import Basemap
 import cartopy
-
+import cartopy.crs as ccrs
+import cartopy.feature as cfeature
 
 
 def df_from_html(file):
@@ -25,11 +26,11 @@ def df_from_html(file):
 def get_all_sessions():
     # Create a list of file paths for the master files
     years = np.arange(1986, 2024)
-    masterfiles = [f"/scratch/arrueegg/WP1/sessions/master{year}.html" for year in years]
+    masterfiles = [f"sessions/master{year}.html" for year in years]
 
     # Append additional file paths for VGOS master files
     years = np.arange(2017, 2020)
-    [masterfiles.append(f"/scratch/arrueegg/WP1/sessions/masterVGOS{year}.html") for year in years]
+    [masterfiles.append(f"sessions/masterVGOS{year}.html") for year in years]
 
     # Create an empty DataFrame to store all the session data
     all_sessions = pd.DataFrame()
@@ -183,8 +184,7 @@ def get_coordinates(trf_file):
 
     return df
 
-import cartopy.crs as ccrs
-import cartopy.feature as cfeature
+
 def plot_stations(df):
     fig, ax = plt.subplots(figsize=(10, 10), subplot_kw={'projection': ccrs.Mercator()})
 
@@ -208,7 +208,7 @@ def plot_stations(df):
 
 def main():
     # path to trf file:
-    trf_file = '/scratch/arrueegg/plot_VLBI_stations/ivs2023b.trf'
+    trf_file = '/scratch2/arrueegg/WP1/VLBI_stations_plot/ivs2023b.trf'
     #load trf file and get station coordinates
     coords = get_coordinates(trf_file)
 

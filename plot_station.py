@@ -2,6 +2,8 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import geopandas as gpd
+from geopandas import datasets
+import cartopy.io.shapereader as shpreader
 from adjustText import adjust_text
 
 def df_from_html(file):
@@ -22,11 +24,11 @@ def df_from_html(file):
 def get_all_sessions():
     # Create a list of file paths for the master files
     years = np.arange(1986, 2024)
-    masterfiles = [f"/scratch/arrueegg/WP1/sessions/master{year}.html" for year in years]
+    masterfiles = [f"sessions/master{year}.html" for year in years]
 
     # Append additional file paths for VGOS master files
     years = np.arange(2017, 2020)
-    [masterfiles.append(f"/scratch/arrueegg/WP1/sessions/masterVGOS{year}.html") for year in years]
+    [masterfiles.append(f"sessions/masterVGOS{year}.html") for year in years]
 
     # Create an empty DataFrame to store all the session data
     all_sessions = pd.DataFrame()
@@ -89,7 +91,7 @@ def station_codes_to_names(station_codes):
     Returns:
         list: A list of station names corresponding to the given station codes.
     """
-    file = '/scratch/arrueegg/WP1/madrigal_download/stations.html'
+    file = '/scratch2/arrueegg/WP1/madrigal_download/stations.html'
     df = pd.read_html(file)[0]
     station_codes = [s.upper() for s in station_codes.Station]
     #return [df.loc[df['Code'] == code, 'Name'].values[0] if code in df['Code'].values else 'Unknown' for code in station_codes]
@@ -210,8 +212,12 @@ def reduce_dataframe(df, technology, min_sessions=50):
     return df
 
 def plot_stations(df, technology):
-    world = gpd.read_file(gpd.datasets.get_path('naturalearth_lowres'))
-    
+    shpfilename = shpreader.natural_earth(resolution='110m',
+                                       category='cultural',
+                                       name='admin_0_countries')
+
+    world = gpd.read_file(shpfilename)
+
     # Change the projection to Mercator (EPSG:3857) or PlateCarree (EPSG:32662)
     epsg_code = 3857
     world_mercator = world.to_crs(epsg=epsg_code)
@@ -245,26 +251,29 @@ def plot_stations(df, technology):
     # Plot markers and store their coordinates
     marker_positions = []
     if len(gdf_VLBI) > 0:
-        ax.scatter(gdf_VLBI.geometry.x, gdf_VLBI.geometry.y, color='tab:orange', s=50, label='legacy VLBI')
+        ax.scatter(gdf_VLBI.geometry.x, gdf_VLBI.geometry.y, color='tab:orange', s=50, label='SX VLBI')
         marker_positions.extend(list(zip(gdf_VLBI.geometry.x, gdf_VLBI.geometry.y)))
     if len(gdf_VGOS) > 0:
         ax.scatter(gdf_VGOS.geometry.x, gdf_VGOS.geometry.y, color='tab:blue', s=50, label='VGOS')
         marker_positions.extend(list(zip(gdf_VGOS.geometry.x, gdf_VGOS.geometry.y)))
     if len(gdf_both) > 0:
-        ax.scatter(gdf_both.geometry.x, gdf_both.geometry.y, color='tab:green', s=50, label='legacy VLBI and VGOS')
+        ax.scatter(gdf_both.geometry.x, gdf_both.geometry.y, color='tab:green', s=50, label='SX VLBI and VGOS')
         marker_positions.extend(list(zip(gdf_both.geometry.x, gdf_both.geometry.y)))
 
     # Add text labels with an initial offset
     texts = []
     for x, y, label, num in zip(gdf_mercator.geometry.x, gdf_mercator.geometry.y, gdf_mercator.Location_Name, gdf_mercator.Session_Count):
-        texts.append(ax.text(x, y + 200000, label, ha='center', fontsize=8, bbox=dict(facecolor='white', alpha=0.7, edgecolor='none', pad=1)))
+        texts.append(ax.text(x, y + 10, label, ha='center', fontsize=8, bbox=dict(facecolor='white', alpha=0.7, edgecolor='none', pad=1)))
 
     # Convert marker_positions to a list of tuples containing text objects at those positions
     marker_texts = [ax.text(x, y, '   ', fontsize=5, bbox=dict(facecolor='white', alpha=0.0, edgecolor='none', pad=4)) for x, y in marker_positions]
     texts = texts + marker_texts
 
     # Adjust text to avoid overlap, including marker positions in the adjustment
-    adjust_text(texts, add_objects=marker_texts, avoid_points=False, avoid_self=True)
+    adjust_text(texts, add_objects=marker_texts, 
+            avoid_points=False, 
+            avoid_self=True,
+            only_move={'points':'yx', 'texts':'yx'},)
 
     ax.set_xticks([])
     ax.set_yticks([])
@@ -273,13 +282,13 @@ def plot_stations(df, technology):
 
     # set title
     if technology == "both":
-        title = "Co-located legacy VLBI and VGOS stations"
+        title = "Co-located SX VLBI and VGOS stations"
     elif technology == "VLBI":
-        title = "legacy VLBI stations"
+        title = "SX VLBI stations"
     elif technology == "VGOS":
         title = "VGOS stations"
     elif technology == "all":
-        title = "legacy VLBI and VGOS stations"
+        title = "SX VLBI and VGOS stations"
     plt.savefig(f'{title.replace(" ", "_")}_notitle.png', dpi=300, bbox_inches='tight')
     plt.title(title, fontsize=18, fontweight='bold', pad=12)
     plt.savefig(f'{title.replace(" ", "_")}.png', dpi=300, bbox_inches='tight')
@@ -297,8 +306,8 @@ def main():
 
 
     #Define file paths
-    geodetic_coords_path = "/scratch/arrueegg/plot_VLBI_stations/ITRF2020-IVS-TRF.SSC.txt"
-    vlbi_file_path = "/scratch/arrueegg/plot_VLBI_stations/ITRF2020_VLBI.SSC.txt"
+    geodetic_coords_path = "ITRF2020-IVS-TRF.SSC.txt"
+    vlbi_file_path = "ITRF2020_VLBI.SSC.txt"
 
     # Extracting data from ITRF2020-IVS-TRF.SSC
     ivstrf_stations = extract_data_from_ivstrf(geodetic_coords_path)
