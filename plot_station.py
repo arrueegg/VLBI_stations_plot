@@ -263,18 +263,48 @@ def plot_stations(df, technology):
     # Add text labels with an initial offset
     texts = []
     for x, y, label, num in zip(gdf_mercator.geometry.x, gdf_mercator.geometry.y, gdf_mercator.Location_Name, gdf_mercator.Session_Count):
-        texts.append(ax.text(x, y + 10, label, ha='center', fontsize=8, bbox=dict(facecolor='white', alpha=0.7, edgecolor='none', pad=1)))
+        if label == "Sejong Observat":
+            label = "Sejong"
+            x = x - 1400000
+        elif label == "Washington":
+            y = y - 1500000
+        elif label == "Fort Davis":
+            x = x - 800000
+        elif label == "Shanghai":
+            x = x - 1800000
+            y = y - 1500000
+        elif label == "Westford":
+            x = x + 1800000
+            y = y - 600000
+        elif label == "Santa Maria":
+            y = y - 1500000
+        elif label == "Concepcion":
+            y = y - 1500000
+        elif label == "Hobart":
+            y = y - 1500000
+        elif label == "Warkworth":
+            x = x - 1100000
+        elif label == "Tsukuba":
+            y = y - 1500000
+            x = x + 1000000
+        elif label == "Ishioka":
+            x = x + 1000000
+        elif label == "Matera":
+            y = y - 1500000
+        elif label == "Zelenchukskaya":
+            x = x + 1000000
+        texts.append(ax.text(x, y+600000, label, ha='center', fontsize=8, bbox=dict(facecolor='white', alpha=0.7, edgecolor='none', pad=1)))
 
     # Convert marker_positions to a list of tuples containing text objects at those positions
-    marker_texts = [ax.text(x, y, '   ', fontsize=5, bbox=dict(facecolor='white', alpha=0.0, edgecolor='none', pad=4)) for x, y in marker_positions]
-    texts = texts + marker_texts
+    #marker_texts = [ax.text(x, y, '   ', fontsize=5, bbox=dict(facecolor='white', alpha=0.0, edgecolor='none', pad=4)) for x, y in marker_positions]
+    #texts = texts + marker_texts
 
     # Adjust text to avoid overlap, including marker positions in the adjustment
-    adjust_text(texts, add_objects=marker_texts, 
+    """adjust_text(texts, add_objects=marker_texts, 
             avoid_points=False, 
             avoid_self=True,
             only_move={'points':'yx', 'texts':'yx'},)
-
+    """
     ax.set_xticks([])
     ax.set_yticks([])
 
